@@ -1,9 +1,11 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import shutil
 import os
+import requests
 
-app = FastAPI(title="Own U Verification API")
+app = FastAPI(title="Own U Verification & Generation API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,6 +16,12 @@ app.add_middleware(
 
 UPLOAD_DIR = "uploaded_ids"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# PASTE YOUR KAGGLE NGROK URL HERE
+KAGGLE_URL = "https://sternum-ferocity-matador.ngrok-free.dev/generate"
+
+class GenerateRequest(BaseModel):
+    prompt: str
 
 @app.post("/verify-id")
 async def verify_id(
@@ -39,6 +47,23 @@ async def verify_id(
         "verified": True
     }
 
+@app.post("/generate-tryon")
+def generate_tryon(request: GenerateRequest):
+    # We wrap the user's request in a prompt that tells SD to make an outfit
+    full_prompt = f"A high quality fashion photograph of a person wearing {request.prompt}, studio lighting, detailed clothing, photorealistic."
+    
+    try:
+        # Send the request to the Kaggle GPU
+        response = requests.post(KAGGLE_URL, json={"prompt": full_prompt})
+        response.raise_for_status()
+        data = response.json()
+        
+        # Return the base64 image back to the Android app
+        return {"status": "success", "image_base64": data["image_base64"]}
+    except Exception as e:
+        print(f"Kaggle Error: {e}")
+        raise HTTPException(status_code=500, detail="Image generation failed.")
+
 @app.get("/")
 def read_root():
-    return {"message": "Own U Verification Server is running."}
+    return {"message": "Own U Server is running."}
