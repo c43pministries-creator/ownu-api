@@ -49,21 +49,19 @@ async def verify_id(
 
 @app.post("/generate-tryon")
 def generate_tryon(request: GenerateRequest):
-    # We wrap the user's request in a prompt that tells SD to make an outfit
-    full_prompt = f"A high quality fashion photograph of a person wearing {request.prompt}, studio lighting, detailed clothing, photorealistic."
+    # We use the user's exact request, but we force the framing
+    full_prompt = f"full body shot, head to toes visible, a realistic fashion photo of a person standing, wearing {request.prompt}, photorealistic, high quality clothing, studio lighting."
     
     try:
         # Send the request to the Kaggle GPU
-        response = requests.post(KAGGLE_URL, json={"prompt": full_prompt})
+        response = requests.post(KAGGLE_URL, json={"prompt": full_prompt}, timeout=120)
         response.raise_for_status()
         data = response.json()
         
-        # Return the base64 image back to the Android app
         return {"status": "success", "image_base64": data["image_base64"]}
     except Exception as e:
         print(f"Kaggle Error: {e}")
         raise HTTPException(status_code=500, detail="Image generation failed.")
-
 @app.get("/")
 def read_root():
     return {"message": "Own U Server is running."}
