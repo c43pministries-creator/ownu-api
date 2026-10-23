@@ -5,7 +5,6 @@ import os
 
 app = FastAPI(title="Own U Verification API")
 
-# Allow the Android app to talk to this server
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -13,27 +12,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create a folder to save the uploaded IDs
 UPLOAD_DIR = "uploaded_ids"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @app.post("/verify-id")
-async def verify_id(file: UploadFile = File(...)):
-    # 1. Check the file type
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image.")
+async def verify_id(
+    front_file: UploadFile = File(...),
+    back_file: UploadFile = File(...)
+):
+    if not front_file.content_type.startswith("image/") or not back_file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Files must be images.")
     
-    # 2. Save the image to the server
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # Save Front
+    front_path = os.path.join(UPLOAD_DIR, f"front_{front_file.filename}")
+    with open(front_path, "wb") as buffer:
+        shutil.copyfileobj(front_file.file, buffer)
         
-    # 3. In the future, we will run the AI verification here.
-    # For now, we just return a success message.
-    
+    # Save Back
+    back_path = os.path.join(UPLOAD_DIR, f"back_{back_file.filename}")
+    with open(back_path, "wb") as buffer:
+        shutil.copyfileobj(back_file.file, buffer)
+        
     return {
         "status": "success",
-        "message": f"ID received and saved as {file.filename}",
+        "message": "Front and Back IDs received and saved.",
         "verified": True
     }
 
