@@ -18,7 +18,7 @@ UPLOAD_DIR = "uploaded_ids"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # PASTE YOUR KAGGLE NGROK URL HERE
-KAGGLE_URL = "https://sternum-ferocity-matador.ngrok-free.dev/generate"
+KAGGLE_URL = "https://sternum-ferocity-matador.ngrok-free.dev"
 
 class GenerateRequest(BaseModel):
     prompt: str
